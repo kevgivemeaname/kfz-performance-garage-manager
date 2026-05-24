@@ -1,3 +1,12 @@
+"""
+KFZ Performance Garage Manager - V2.1
+
+A terminal-based vehicle management system for tracking cars,
+service records, modification records, ownership costs and garage analytics.
+
+Version 2.1 adds a garage statistics dashboard on top of the V2.0 CRUD system.
+"""
+
 import json
 import os
 import time
@@ -91,10 +100,13 @@ class Car:
 
         return total
 
+    def total_ownership_cost(self):
+        return self.total_service_cost() + self.total_modification_cost()
+
     def view_cost_summary(self):
         service_total = self.total_service_cost()
         modification_total = self.total_modification_cost()
-        overall_total = service_total + modification_total
+        overall_total = self.total_ownership_cost()
 
         print(f"\nCost Summary for {self.plate}")
         print("-" * 45)
@@ -304,6 +316,9 @@ class GarageManager:
     def save_data(self):
         """
         Saves all garage data to a JSON file.
+
+        Objects are converted into dictionaries before writing,
+        because JSON cannot directly store Python class instances.
         """
 
         data = []
@@ -639,7 +654,7 @@ class GarageManager:
         for car in self.cars:
             service_total = car.total_service_cost()
             modification_total = car.total_modification_cost()
-            overall_total = service_total + modification_total
+            overall_total = car.total_ownership_cost()
 
             garage_total += overall_total
 
@@ -651,6 +666,136 @@ class GarageManager:
 
         print("\n" + "=" * 45)
         print(f"{'Garage Total:':<25} ${garage_total:>10.2f}")
+
+    def view_garage_statistics(self):
+        """
+        Displays garage-level analytics.
+
+        This method turns stored vehicle, service and modification data into
+        meaningful business-style summaries, such as total garage cost,
+        average vehicle cost, highest individual expenses and most modified car.
+        """
+
+        self.print_header("Garage Statistics")
+
+        if len(self.cars) == 0:
+            print("No cars in garage.")
+            return
+
+        # Aggregate garage-wide totals across all vehicles.
+        garage_total = 0
+        total_service_cost = 0
+        total_modification_cost = 0
+        total_service_records = 0
+        total_modification_records = 0
+
+        # Track the highest individual service record.
+        highest_service = None
+        highest_service_car = None
+
+        # Track the highest individual modification record.
+        highest_modification = None
+        highest_modification_car = None
+
+        for car in self.cars:
+            garage_total += car.total_ownership_cost()
+            total_service_cost += car.total_service_cost()
+            total_modification_cost += car.total_modification_cost()
+            total_service_records += len(car.services)
+            total_modification_records += len(car.modifications)
+
+            # Find the most expensive single service item.
+            for service in car.services:
+                if highest_service is None or service.cost > highest_service.cost:
+                    highest_service = service
+                    highest_service_car = car
+
+            # Find the most expensive single modification item.
+            for modification in car.modifications:
+                if (
+                    highest_modification is None
+                    or modification.cost > highest_modification.cost
+                ):
+                    highest_modification = modification
+                    highest_modification_car = car
+
+        # Find the vehicle with the highest combined service and modification cost.
+        most_expensive_vehicle = max(
+            self.cars,
+            key=lambda car: car.total_ownership_cost()
+        )
+
+        # Find the vehicle with the largest number of modification records.
+        most_modified_vehicle = max(
+            self.cars,
+            key=lambda car: len(car.modifications)
+        )
+
+        average_vehicle_cost = garage_total / len(self.cars)
+
+        print(f"{'Vehicles Stored:':<30} {len(self.cars):>12}")
+        print(f"{'Service Records:':<30} {total_service_records:>12}")
+        print(f"{'Modification Records:':<30} {total_modification_records:>12}")
+        print("-" * 45)
+
+        print(f"{'Total Service Cost:':<30} ${total_service_cost:>11.2f}")
+        print(f"{'Total Modification Cost:':<30} ${total_modification_cost:>11.2f}")
+        print(f"{'Garage Total Cost:':<30} ${garage_total:>11.2f}")
+        print(f"{'Average Vehicle Cost:':<30} ${average_vehicle_cost:>11.2f}")
+        print("-" * 45)
+
+        print(
+            f"{'Most Expensive Vehicle:':<30} "
+            f"{most_expensive_vehicle.plate}"
+        )
+        print(
+            f"{'Vehicle Total Cost:':<30} "
+            f"${most_expensive_vehicle.total_ownership_cost():>11.2f}"
+        )
+
+        print(
+            f"{'Most Modified Vehicle:':<30} "
+            f"{most_modified_vehicle.plate}"
+        )
+        print(
+            f"{'Number of Modifications:':<30} "
+            f"{len(most_modified_vehicle.modifications):>12}"
+        )
+        print("-" * 45)
+
+        if highest_service is not None:
+            print(
+                f"{'Highest Service Cost:':<30} "
+                f"${highest_service.cost:>11.2f}"
+            )
+            print(
+                f"{'Service Vehicle:':<30} "
+                f"{highest_service_car.plate}"
+            )
+            print(
+                f"{'Service Description:':<30} "
+                f"{highest_service.description}"
+            )
+        else:
+            print("No service cost data available.")
+
+        print("-" * 45)
+
+        if highest_modification is not None:
+            print(
+                f"{'Highest Modification Cost:':<30} "
+                f"${highest_modification.cost:>11.2f}"
+            )
+            print(
+                f"{'Modification Vehicle:':<30} "
+                f"{highest_modification_car.plate}"
+            )
+            print(
+                f"{'Modification Part:':<30} "
+                f"{highest_modification.part_name}"
+            )
+        else:
+            print("No modification cost data available.")
 
     def show_menu(self):
         self.print_header("KFZ Performance Garage Manager")
@@ -671,14 +816,22 @@ class GarageManager:
         print("-" * 45)
         print("12. View Cost Summary Per Car")
         print("13. View Overall Garage Summary")
+        print("14. View Garage Statistics")
         print("-" * 45)
-        print("14. Delete Car")
-        print("15. Save Data")
-        print("16. Load Data")
+        print("15. Delete Car")
+        print("16. Save Data")
+        print("17. Load Data")
         print("-" * 45)
         print(" 0. Exit")
 
     def run(self):
+        """
+        Runs the main menu loop.
+
+        The dictionary below maps menu choices to methods,
+        keeping the main loop cleaner than a long if/elif chain.
+        """
+
         menu_actions = {
             "1": self.add_car,
             "2": self.view_cars,
@@ -693,9 +846,10 @@ class GarageManager:
             "11": self.delete_modification_record,
             "12": self.view_cost_summary,
             "13": self.view_garage_summary,
-            "14": self.delete_car,
-            "15": self.save_data,
-            "16": self.load_data
+            "14": self.view_garage_statistics,
+            "15": self.delete_car,
+            "16": self.save_data,
+            "17": self.load_data
         }
 
         while True:
