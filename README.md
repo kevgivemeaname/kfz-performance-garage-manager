@@ -14,6 +14,7 @@ See the full Version 2.0 development roadmap here:
 
 [Version 2.0 Roadmap](VERSION_2_ROADMAP.md)
 
+---
 
 ## Screenshots
 
@@ -29,20 +30,23 @@ See the full Version 2.0 development roadmap here:
 ### Garage Summary
 ![Garage Summary](screenshots/garage-summary.png)
 
+---
 
 ## Overview
 
-**KFZ Performance Garage Manager** was designed as a motorsport-inspired garage management tool.  
+**KFZ Performance Garage Manager** was designed as a motorsport-inspired garage management tool.
+
 It combines practical vehicle record keeping with a branded terminal interface, making it suitable for car enthusiasts who want to track servicing, modifications, and total build cost across multiple vehicles.
 
 This project was developed as a Python-based system with a focus on:
 
 - Object-Oriented Programming
+- Object-Oriented System Design
 - File handling with JSON
 - Input validation
 - Menu-driven terminal interaction
 - Persistent data storage
-- Clean formatted output
+- Clean formatted terminal output
 - Automotive-focused user experience
 
 ---
@@ -56,17 +60,21 @@ This project was developed as a Python-based system with a focus on:
 - Search vehicles by plate/rego
 - Delete vehicles from the garage
 
-### Service Records
+### Service Record Management
 
-- Add service records for a selected vehicle
+- Add service records
+- View service history
+- Edit service records
+- Delete service records
 - Store service date, description, odometer reading, and cost
-- View formatted service history per vehicle
 
-### Modification Records
+### Modification Record Management
 
-- Add aftermarket modification records
-- Store modification date, part name, category, and cost
-- View modification history per vehicle
+- Add modification records
+- View modification history
+- Edit modification records
+- Delete modification records
+- Store part name, category, and cost
 
 ### Cost Tracking
 
@@ -87,8 +95,7 @@ This project was developed as a Python-based system with a focus on:
 
 - Python 3
 - JSON file handling
-- Object-Oriented System Design
-- Object-Oriented Programming
+- Object-Oriented Programming (OOP)
 - Terminal-based user interface
 - Formatted table output
 
@@ -115,15 +122,21 @@ KFZ-Performance-Garage-Manager/
 
 ## How to Run
 
-1. Make sure Python 3 is installed.
+### 1. Make sure Python 3 is installed
 
-2. Open Terminal and navigate to the project folder:
+Check Python version:
+
+```bash
+python3 --version
+```
+
+### 2. Open Terminal and navigate to the project folder
 
 ```bash
 cd path/to/KFZ-Performance-Garage-Manager
 ```
 
-3. Run the program:
+### 3. Run the program
 
 ```bash
 python3 main.py
@@ -155,7 +168,11 @@ Example vehicles:
 
 ## Data Storage
 
-Vehicle data is stored in `garage_data.json`.
+Vehicle data is stored in:
+
+```text
+garage_data.json
+```
 
 Each vehicle record contains:
 
@@ -166,7 +183,7 @@ Each vehicle record contains:
 - Service records
 - Modification records
 
-The program rebuilds Python objects from the JSON file when loaded.
+The system rebuilds Python objects from the JSON file when loaded.
 
 ---
 
@@ -175,7 +192,7 @@ The program rebuilds Python objects from the JSON file when loaded.
 This project demonstrates several core Python concepts:
 
 - Classes and objects
-- Instance attributes
+- Object composition
 - Lists of objects
 - Loops and conditional statements
 - Functions and methods
@@ -183,26 +200,24 @@ This project demonstrates several core Python concepts:
 - JSON reading and writing
 - String formatting
 - User input validation
+- CRUD-style management systems
 - Terminal menu design
 
 ---
 
 ## Future Development Roadmap
 
-Possible future improvements include:
+Planned future improvements include:
 
 - Date format validation
-- Edit service and modification records
+- Search and filter system
+- Garage analytics dashboard
 - Export reports to CSV or PDF
-- Rego and insurance expiry reminders
-- Search and filter records
-- Vehicle photo support
+- Rego and insurance reminders
+- Vehicle image support
+- PostgreSQL database integration
 - Web dashboard version
-- User login system
-- Database integration with PostgreSQL
 - Mobile-friendly interface
-- Workshop management dashboard
-- Performance build tracking
 - Cloud-based garage storage
 - Multi-user garage profiles
 
@@ -210,11 +225,35 @@ Possible future improvements include:
 
 ## Product Vision
 
-The long-term vision of KFZ Performance Garage Manager is to become a digital garage platform for automotive enthusiasts.
+The long-term vision of KFZ Performance Garage Manager is to become a modern digital garage platform for automotive enthusiasts.
 
-Rather than being only a basic vehicle record system, it can evolve into a premium ownership and build-tracking tool for people who care about performance cars, modifications, maintenance, and car culture.
+Rather than being only a basic vehicle record system, the platform can evolve into a premium ownership and build-tracking ecosystem focused on:
+
+- Performance vehicles
+- Modification tracking
+- Garage analytics
+- Maintenance history
+- Automotive culture
+- Premium user experience
 
 Designed for enthusiasts who view their vehicles as more than transportation.
+
+---
+
+## Version History
+
+### V2.0
+
+Major update introducing:
+
+- Full CRUD management system
+- Edit service records
+- Delete service records
+- Edit modification records
+- Delete modification records
+- Improved terminal workflow
+- Refactored menu management
+- Improved system structure
 
 ---
 
@@ -222,5 +261,6 @@ Designed for enthusiasts who view their vehicles as more than transportation.
 
 Created by Kevin Zhang.
 
-Project concept:  
+Project concept:
+
 **Performance Garage Manager for automotive enthusiasts and performance vehicle ownership tracking.**
