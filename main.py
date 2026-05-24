@@ -2,9 +2,8 @@ import json
 import os
 import time
 
+
 DATA_FILE = "garage_data.json"
-HEADER_WIDTH = 45
-TABLE_WIDTH = 75
 
 
 class Car:
@@ -14,7 +13,7 @@ class Car:
     """
 
     def __init__(self, plate, make, model, year):
-        self.plate = plate.upper()
+        self.plate = plate
         self.make = make
         self.model = model
         self.year = year
@@ -28,47 +27,69 @@ class Car:
         self.services.append(service)
 
     def view_services(self):
-        if not self.services:
+        if len(self.services) == 0:
             print("No service records found.")
             return
 
         print(f"\nService History for {self.plate}")
-        print("-" * TABLE_WIDTH)
+        print("-" * 75)
         self.display_info()
-        print("-" * TABLE_WIDTH)
-        print(f"{'DATE':<12}{'DESCRIPTION':<35}{'ODOMETER':>12}{'COST':>14}")
-        print("-" * TABLE_WIDTH)
+        print("-" * 75)
+
+        print(
+            f"{'DATE':<12}"
+            f"{'DESCRIPTION':<35}"
+            f"{'ODOMETER':>12}"
+            f"{'COST':>14}"
+        )
+        print("-" * 75)
 
         for service in self.services:
             service.display_info()
 
-        print("-" * TABLE_WIDTH)
+        print("-" * 75)
 
     def add_modification(self, modification):
         self.modifications.append(modification)
 
     def view_modifications(self):
-        if not self.modifications:
+        if len(self.modifications) == 0:
             print("No modification records found.")
             return
 
         print(f"\nModification History for {self.plate}")
-        print("-" * TABLE_WIDTH)
+        print("-" * 75)
         self.display_info()
-        print("-" * TABLE_WIDTH)
-        print(f"{'DATE':<12}{'PART':<35}{'CATEGORY':<15}{'COST':>12}")
-        print("-" * TABLE_WIDTH)
+        print("-" * 75)
+
+        print(
+            f"{'DATE':<12}"
+            f"{'PART':<35}"
+            f"{'CATEGORY':<15}"
+            f"{'COST':>12}"
+        )
+        print("-" * 75)
 
         for modification in self.modifications:
             modification.display_info()
 
-        print("-" * TABLE_WIDTH)
+        print("-" * 75)
 
     def total_service_cost(self):
-        return sum(service.cost for service in self.services)
+        total = 0
+
+        for service in self.services:
+            total += service.cost
+
+        return total
 
     def total_modification_cost(self):
-        return sum(modification.cost for modification in self.modifications)
+        total = 0
+
+        for modification in self.modifications:
+            total += modification.cost
+
+        return total
 
     def view_cost_summary(self):
         service_total = self.total_service_cost()
@@ -76,25 +97,37 @@ class Car:
         overall_total = service_total + modification_total
 
         print(f"\nCost Summary for {self.plate}")
-        print("-" * HEADER_WIDTH)
+        print("-" * 45)
         print(f"{'Service Total:':<25} ${service_total:>10.2f}")
         print(f"{'Modification Total:':<25} ${modification_total:>10.2f}")
         print(f"{'Overall Total:':<25} ${overall_total:>10.2f}")
-        print("-" * HEADER_WIDTH)
+        print("-" * 45)
 
     def to_dict(self):
+        services_data = []
+
+        for service in self.services:
+            services_data.append(service.to_dict())
+
+        modifications_data = []
+
+        for modification in self.modifications:
+            modifications_data.append(modification.to_dict())
+
         return {
             "plate": self.plate,
             "make": self.make,
             "model": self.model,
             "year": self.year,
-            "services": [service.to_dict() for service in self.services],
-            "modifications": [modification.to_dict() for modification in self.modifications],
+            "services": services_data,
+            "modifications": modifications_data
         }
 
 
 class ServiceRecord:
-    """Represents one service record for a car."""
+    """
+    Represents one service record for a vehicle.
+    """
 
     def __init__(self, date, description, odometer, cost):
         self.date = date
@@ -115,12 +148,14 @@ class ServiceRecord:
             "date": self.date,
             "description": self.description,
             "odometer": self.odometer,
-            "cost": self.cost,
+            "cost": self.cost
         }
 
 
 class Modification:
-    """Represents one modification record for a car."""
+    """
+    Represents one modification record for a vehicle.
+    """
 
     def __init__(self, date, part_name, category, cost):
         self.date = date
@@ -141,7 +176,7 @@ class Modification:
             "date": self.date,
             "part_name": self.part_name,
             "category": self.category,
-            "cost": self.cost,
+            "cost": self.cost
         }
 
 
@@ -155,25 +190,37 @@ class GarageManager:
         self.cars = []
 
     def print_header(self, title):
-        line = "=" * HEADER_WIDTH
-        print(f"\n{line}")
-        print(title.upper().center(HEADER_WIDTH))
-        print(line)
+        line = "=" * 45
 
-    def pause(self):
-        input("\nPress Enter to continue...")
+        print()
+
+        for char in line:
+            print(char, end="", flush=True)
+            time.sleep(0.003)
+
+        print()
+        print(title.upper().center(45))
+
+        for char in line:
+            print(char, end="", flush=True)
+            time.sleep(0.003)
+
+        print()
 
     def clear_screen(self):
         os.system("cls" if os.name == "nt" else "clear")
 
-    def get_text_input(self, prompt, uppercase=False):
+    def pause(self):
+        input("\nPress Enter to continue...")
+
+    def get_text_input(self, prompt):
         while True:
             value = input(prompt).strip()
 
-            if value:
-                return value.upper() if uppercase else value
-
-            print("Input cannot be empty.")
+            if value == "":
+                print("Input cannot be empty.")
+            else:
+                return value
 
     def get_float_input(self, prompt):
         while True:
@@ -202,7 +249,11 @@ class GarageManager:
                 print(f"Invalid input: {error}")
 
     def load_data(self):
-        """Load garage data from a JSON file and rebuild program objects."""
+        """
+        Loads garage data from a JSON file and rebuilds Car,
+        ServiceRecord and Modification objects.
+        """
+
         try:
             with open(DATA_FILE, "r") as file:
                 data = json.load(file)
@@ -214,28 +265,28 @@ class GarageManager:
                     car_data["plate"],
                     car_data["make"],
                     car_data["model"],
-                    car_data["year"],
+                    car_data["year"]
                 )
 
-                for service_data in car_data.get("services", []):
-                    car.add_service(
-                        ServiceRecord(
-                            service_data["date"],
-                            service_data["description"],
-                            service_data["odometer"],
-                            service_data["cost"],
-                        )
+                for service_data in car_data["services"]:
+                    service = ServiceRecord(
+                        service_data["date"],
+                        service_data["description"],
+                        service_data["odometer"],
+                        service_data["cost"]
                     )
 
-                for modification_data in car_data.get("modifications", []):
-                    car.add_modification(
-                        Modification(
-                            modification_data["date"],
-                            modification_data["part_name"],
-                            modification_data["category"],
-                            modification_data["cost"],
-                        )
+                    car.add_service(service)
+
+                for modification_data in car_data["modifications"]:
+                    modification = Modification(
+                        modification_data["date"],
+                        modification_data["part_name"],
+                        modification_data["category"],
+                        modification_data["cost"]
                     )
+
+                    car.add_modification(modification)
 
                 self.cars.append(car)
 
@@ -243,12 +294,22 @@ class GarageManager:
 
         except FileNotFoundError:
             print("No saved garage data found.")
+
         except json.JSONDecodeError:
-            print("Garage data file is damaged or not valid JSON.")
+            print("Garage data file is corrupted or invalid.")
+
+        except KeyError as error:
+            print(f"Garage data is missing required field: {error}")
 
     def save_data(self):
-        """Save all garage data to a JSON file."""
-        data = [car.to_dict() for car in self.cars]
+        """
+        Saves all garage data to a JSON file.
+        """
+
+        data = []
+
+        for car in self.cars:
+            data.append(car.to_dict())
 
         with open(DATA_FILE, "w") as file:
             json.dump(data, file, indent=4)
@@ -256,13 +317,20 @@ class GarageManager:
         print("Garage data saved successfully.")
 
     def find_car(self, plate):
+        """
+        Searches for a car by plate/rego.
+        Returns the Car object if found, otherwise returns None.
+        """
+
         for car in self.cars:
             if car.plate.lower() == plate.lower():
                 return car
+
         return None
 
     def select_car(self):
-        plate = self.get_text_input("Enter plate/rego: ", uppercase=True)
+        plate = self.get_text_input("Enter plate/rego: ").upper()
+
         car = self.find_car(plate)
 
         if car is None:
@@ -272,9 +340,11 @@ class GarageManager:
         return car
 
     def add_car(self):
-        plate = self.get_text_input("Enter plate/rego: ", uppercase=True)
+        plate = self.get_text_input("Enter plate/rego: ").upper()
 
-        if self.find_car(plate) is not None:
+        existing_car = self.find_car(plate)
+
+        if existing_car is not None:
             print("This plate already exists in the garage.")
             return
 
@@ -282,27 +352,48 @@ class GarageManager:
         model = self.get_text_input("Enter model: ")
         year = self.get_int_input("Enter year: ")
 
-        self.cars.append(Car(plate, make, model, year))
+        new_car = Car(plate, make, model, year)
+        self.cars.append(new_car)
+
         print("Car added successfully.")
 
     def view_cars(self):
-        if not self.cars:
+        if len(self.cars) == 0:
             print("No cars in garage.")
             return
 
-        print("\n" + "-" * TABLE_WIDTH)
-        print(f"{'PLATE':<12}{'MAKE':<15}{'MODEL':<20}{'YEAR':>8}")
-        print("-" * TABLE_WIDTH)
+        print()
+        print("-" * 75)
+
+        print(
+            f"{'PLATE':<12}"
+            f"{'MAKE':<15}"
+            f"{'MODEL':<20}"
+            f"{'YEAR':>8}"
+        )
+
+        print("-" * 75)
 
         for car in self.cars:
-            print(f"{car.plate:<12}{car.make:<15}{car.model:<20}{car.year:>8}")
+            print(
+                f"{car.plate:<12}"
+                f"{car.make:<15}"
+                f"{car.model:<20}"
+                f"{car.year:>8}"
+            )
 
-        print("-" * TABLE_WIDTH)
+        print("-" * 75)
 
     def search_car(self):
-        car = self.select_car()
-        if car is not None:
-            car.display_info()
+        plate = self.get_text_input("Enter plate/rego to search: ").upper()
+
+        car = self.find_car(plate)
+
+        if car is None:
+            print("Car not found.")
+            return
+
+        car.display_info()
 
     def delete_car(self):
         car = self.select_car()
@@ -310,8 +401,15 @@ class GarageManager:
         if car is None:
             return
 
-        self.cars.remove(car)
-        print("Car deleted successfully.")
+        confirm = self.get_text_input(
+            f"Type DELETE to confirm removal of {car.plate}: "
+        )
+
+        if confirm == "DELETE":
+            self.cars.remove(car)
+            print("Car deleted successfully.")
+        else:
+            print("Delete cancelled.")
 
     def add_service_record(self):
         car = self.select_car()
@@ -324,13 +422,97 @@ class GarageManager:
         odometer = self.get_int_input("Enter odometer: ")
         cost = self.get_float_input("Enter service cost: ")
 
-        car.add_service(ServiceRecord(date, description, odometer, cost))
+        service = ServiceRecord(date, description, odometer, cost)
+        car.add_service(service)
+
         print("Service record added successfully.")
 
     def view_service_records(self):
         car = self.select_car()
-        if car is not None:
-            car.view_services()
+
+        if car is None:
+            return
+
+        car.view_services()
+
+    def edit_service_record(self):
+        car = self.select_car()
+
+        if car is None:
+            return
+
+        if len(car.services) == 0:
+            print("No service records found.")
+            return
+
+        print("\nService Records")
+        print("-" * 60)
+
+        for index, service in enumerate(car.services, start=1):
+            print(
+                f"{index}. {service.date} - {service.description} "
+                f"({service.odometer} km, ${service.cost:.2f})"
+            )
+
+        print("-" * 60)
+
+        record_number = self.get_int_input("Select service record number: ")
+
+        if record_number < 1 or record_number > len(car.services):
+            print("Invalid selection.")
+            return
+
+        service = car.services[record_number - 1]
+
+        print("\nCurrent Record:")
+        service.display_info()
+
+        print("\nEnter new service details")
+        service.date = self.get_text_input("New date (DD/MM/YYYY): ")
+        service.description = self.get_text_input("New description: ")
+        service.odometer = self.get_int_input("New odometer: ")
+        service.cost = self.get_float_input("New cost: ")
+
+        print("Service record updated successfully.")
+
+    def delete_service_record(self):
+        car = self.select_car()
+
+        if car is None:
+            return
+
+        if len(car.services) == 0:
+            print("No service records found.")
+            return
+
+        print("\nService Records")
+        print("-" * 60)
+
+        for index, service in enumerate(car.services, start=1):
+            print(
+                f"{index}. {service.date} - {service.description} "
+                f"({service.odometer} km, ${service.cost:.2f})"
+            )
+
+        print("-" * 60)
+
+        record_number = self.get_int_input("Select service record number to delete: ")
+
+        if record_number < 1 or record_number > len(car.services):
+            print("Invalid selection.")
+            return
+
+        service = car.services[record_number - 1]
+
+        confirm = self.get_text_input(
+            f"Type DELETE to confirm deletion of '{service.description}': "
+        )
+
+        if confirm == "DELETE":
+            car.services.pop(record_number - 1)
+            print("Service record deleted successfully.")
+        else:
+            print("Delete cancelled.")
 
     def add_modification_record(self):
         car = self.select_car()
@@ -343,23 +525,112 @@ class GarageManager:
         category = self.get_text_input("Enter category: ")
         cost = self.get_float_input("Enter modification cost: ")
 
-        car.add_modification(Modification(date, part_name, category, cost))
+        modification = Modification(date, part_name, category, cost)
+        car.add_modification(modification)
+
         print("Modification record added successfully.")
 
     def view_modification_records(self):
         car = self.select_car()
-        if car is not None:
-            car.view_modifications()
+
+        if car is None:
+            return
+
+        car.view_modifications()
+
+    def edit_modification_record(self):
+        car = self.select_car()
+
+        if car is None:
+            return
+
+        if len(car.modifications) == 0:
+            print("No modification records found.")
+            return
+
+        print("\nModification Records")
+        print("-" * 60)
+
+        for index, modification in enumerate(car.modifications, start=1):
+            print(
+                f"{index}. {modification.date} - {modification.part_name} "
+                f"({modification.category}, ${modification.cost:.2f})"
+            )
+
+        print("-" * 60)
+
+        record_number = self.get_int_input("Select modification record number: ")
+
+        if record_number < 1 or record_number > len(car.modifications):
+            print("Invalid selection.")
+            return
+
+        modification = car.modifications[record_number - 1]
+
+        print("\nCurrent Record:")
+        modification.display_info()
+
+        print("\nEnter new modification details")
+        modification.date = self.get_text_input("New date (DD/MM/YYYY): ")
+        modification.part_name = self.get_text_input("New part name: ")
+        modification.category = self.get_text_input("New category: ")
+        modification.cost = self.get_float_input("New cost: ")
+
+        print("Modification record updated successfully.")
+
+    def delete_modification_record(self):
+        car = self.select_car()
+
+        if car is None:
+            return
+
+        if len(car.modifications) == 0:
+            print("No modification records found.")
+            return
+
+        print("\nModification Records")
+        print("-" * 60)
+
+        for index, modification in enumerate(car.modifications, start=1):
+            print(
+                f"{index}. {modification.date} - {modification.part_name} "
+                f"({modification.category}, ${modification.cost:.2f})"
+            )
+
+        print("-" * 60)
+
+        record_number = self.get_int_input(
+            "Select modification record number to delete: "
+        )
+
+        if record_number < 1 or record_number > len(car.modifications):
+            print("Invalid selection.")
+            return
+
+        modification = car.modifications[record_number - 1]
+
+        confirm = self.get_text_input(
+            f"Type DELETE to confirm deletion of '{modification.part_name}': "
+        )
+
+        if confirm == "DELETE":
+            car.modifications.pop(record_number - 1)
+            print("Modification record deleted successfully.")
+        else:
+            print("Delete cancelled.")
 
     def view_cost_summary(self):
         car = self.select_car()
-        if car is not None:
-            car.view_cost_summary()
+
+        if car is None:
+            return
+
+        car.view_cost_summary()
 
     def view_garage_summary(self):
         self.print_header("Garage Summary")
 
-        if not self.cars:
+        if len(self.cars) == 0:
             print("No cars in garage.")
             return
 
@@ -368,62 +639,69 @@ class GarageManager:
         for car in self.cars:
             service_total = car.total_service_cost()
             modification_total = car.total_modification_cost()
-            vehicle_total = service_total + modification_total
-            garage_total += vehicle_total
+            overall_total = service_total + modification_total
+
+            garage_total += overall_total
 
             print(f"\n{car.year} {car.make} {car.model} ({car.plate})")
-            print("-" * HEADER_WIDTH)
+            print("-" * 45)
             print(f"{'Service Total:':<25} ${service_total:>10.2f}")
             print(f"{'Modification Total:':<25} ${modification_total:>10.2f}")
-            print(f"{'Vehicle Total:':<25} ${vehicle_total:>10.2f}")
+            print(f"{'Vehicle Total:':<25} ${overall_total:>10.2f}")
 
-        print("\n" + "=" * HEADER_WIDTH)
+        print("\n" + "=" * 45)
         print(f"{'Garage Total:':<25} ${garage_total:>10.2f}")
 
     def show_menu(self):
         self.print_header("KFZ Performance Garage Manager")
+
         print(" 1. Add Car")
         print(" 2. View Cars")
         print(" 3. Search Car")
+        print("-" * 45)
         print(" 4. Add Service Record")
         print(" 5. View Service Records")
-        print(" 6. Add Modification Record")
-        print(" 7. View Modification Records")
-        print("-" * HEADER_WIDTH)
-        print(" 8. View Cost Summary Per Car")
-        print(" 9. View Overall Garage Summary")
-        print("-" * HEADER_WIDTH)
-        print("10. Delete Car")
-        print("11. Save Data")
-        print("12. Load Data")
-        print("-" * HEADER_WIDTH)
+        print(" 6. Edit Service Record")
+        print(" 7. Delete Service Record")
+        print("-" * 45)
+        print(" 8. Add Modification Record")
+        print(" 9. View Modification Records")
+        print("10. Edit Modification Record")
+        print("11. Delete Modification Record")
+        print("-" * 45)
+        print("12. View Cost Summary Per Car")
+        print("13. View Overall Garage Summary")
+        print("-" * 45)
+        print("14. Delete Car")
+        print("15. Save Data")
+        print("16. Load Data")
+        print("-" * 45)
         print(" 0. Exit")
 
     def run(self):
-        self.load_data()
-        time.sleep(0.5)
-        print("System ready.")
-        print("\nWelcome back, Champion.")
-        self.pause()
-
         menu_actions = {
             "1": self.add_car,
             "2": self.view_cars,
             "3": self.search_car,
             "4": self.add_service_record,
             "5": self.view_service_records,
-            "6": self.add_modification_record,
-            "7": self.view_modification_records,
-            "8": self.view_cost_summary,
-            "9": self.view_garage_summary,
-            "10": self.delete_car,
-            "11": self.save_data,
-            "12": self.load_data,
+            "6": self.edit_service_record,
+            "7": self.delete_service_record,
+            "8": self.add_modification_record,
+            "9": self.view_modification_records,
+            "10": self.edit_modification_record,
+            "11": self.delete_modification_record,
+            "12": self.view_cost_summary,
+            "13": self.view_garage_summary,
+            "14": self.delete_car,
+            "15": self.save_data,
+            "16": self.load_data
         }
 
         while True:
             self.clear_screen()
             self.show_menu()
+
             choice = input("Select option: ").strip()
 
             if choice == "0":
@@ -447,7 +725,11 @@ class GarageManager:
 
 
 def show_logo():
-    """Display the animated KFZ startup logo."""
+    """
+    Displays the animated KFZ startup logo.
+    Raw strings are used to preserve ASCII-art formatting.
+    """
+
     logo = [
         r"                                ",
         r"        ██╗  ██╗███████╗███████╗",
@@ -469,10 +751,13 @@ def show_logo():
 
 def startup_sequence():
     show_logo()
+
     print("Starting KFZ Performance Garage Manager...")
     time.sleep(0.5)
+
     print("Initialising vehicle management modules...")
     time.sleep(1)
+
     print("Synchronising garage records...")
 
     for i in range(101):
@@ -485,7 +770,18 @@ def startup_sequence():
 
 def main():
     startup_sequence()
+
     manager = GarageManager()
+
+    manager.load_data()
+    time.sleep(1)
+
+    print("System ready.")
+    time.sleep(0.5)
+
+    print("\nWelcome back, Champion.")
+
+    manager.pause()
     manager.run()
 
 
