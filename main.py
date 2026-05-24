@@ -1,15 +1,16 @@
 """
-KFZ Performance Garage Manager - V2.1
+KFZ Performance Garage Manager - V2.4
 
 A terminal-based vehicle management system for tracking cars,
 service records, modification records, ownership costs and garage analytics.
 
-Version 2.1 adds a garage statistics dashboard on top of the V2.0 CRUD system.
+Version 2.4 adds a vehicle sorting system on top of the V2.3 search and filter system.
 """
 
 import json
 import os
 import time
+from datetime import datetime
 
 
 DATA_FILE = "garage_data.json"
@@ -234,6 +235,24 @@ class GarageManager:
             else:
                 return value
 
+    def get_date_input(self, prompt):
+        """
+        Gets a valid date from the user in DD/MM/YYYY format.
+
+        datetime.strptime() is used to validate the date so invalid values
+        such as 99/99/9999 or 31/02/2026 are rejected.
+        """
+
+        while True:
+            date_input = input(prompt).strip()
+
+            try:
+                datetime.strptime(date_input, "%d/%m/%Y")
+                return date_input
+
+            except ValueError:
+                print("Invalid date format. Use DD/MM/YYYY.")
+
     def get_float_input(self, prompt):
         while True:
             try:
@@ -432,7 +451,7 @@ class GarageManager:
         if car is None:
             return
 
-        date = self.get_text_input("Enter service date (DD/MM/YYYY): ")
+        date = self.get_date_input("Enter service date (DD/MM/YYYY): ")
         description = self.get_text_input("Enter service description: ")
         odometer = self.get_int_input("Enter odometer: ")
         cost = self.get_float_input("Enter service cost: ")
@@ -483,7 +502,7 @@ class GarageManager:
         service.display_info()
 
         print("\nEnter new service details")
-        service.date = self.get_text_input("New date (DD/MM/YYYY): ")
+        service.date = self.get_date_input("New date (DD/MM/YYYY): ")
         service.description = self.get_text_input("New description: ")
         service.odometer = self.get_int_input("New odometer: ")
         service.cost = self.get_float_input("New cost: ")
@@ -535,7 +554,7 @@ class GarageManager:
         if car is None:
             return
 
-        date = self.get_text_input("Enter modification date (DD/MM/YYYY): ")
+        date = self.get_date_input("Enter modification date (DD/MM/YYYY): ")
         part_name = self.get_text_input("Enter part name: ")
         category = self.get_text_input("Enter category: ")
         cost = self.get_float_input("Enter modification cost: ")
@@ -586,7 +605,7 @@ class GarageManager:
         modification.display_info()
 
         print("\nEnter new modification details")
-        modification.date = self.get_text_input("New date (DD/MM/YYYY): ")
+        modification.date = self.get_date_input("New date (DD/MM/YYYY): ")
         modification.part_name = self.get_text_input("New part name: ")
         modification.category = self.get_text_input("New category: ")
         modification.cost = self.get_float_input("New cost: ")
@@ -797,6 +816,249 @@ class GarageManager:
         else:
             print("No modification cost data available.")
 
+    def display_vehicle_search_results(self, results):
+        """
+        Displays a list of vehicles returned by a search or filter operation.
+        """
+
+        if len(results) == 0:
+            print("No matching vehicles found.")
+            return
+
+        print()
+        print("-" * 75)
+        print(
+            f"{'PLATE':<12}"
+            f"{'MAKE':<15}"
+            f"{'MODEL':<20}"
+            f"{'YEAR':>8}"
+            f"{'TOTAL COST':>18}"
+        )
+        print("-" * 75)
+
+        for car in results:
+            print(
+                f"{car.plate:<12}"
+                f"{car.make:<15}"
+                f"{car.model:<20}"
+                f"{car.year:>8}"
+                f"${car.total_ownership_cost():>17.2f}"
+            )
+
+        print("-" * 75)
+
+    def search_by_make(self):
+        """
+        Finds all vehicles matching a selected manufacturer.
+        """
+
+        make = self.get_text_input("Enter make to search: ")
+
+        results = []
+
+        for car in self.cars:
+            if car.make.lower() == make.lower():
+                results.append(car)
+
+        self.display_vehicle_search_results(results)
+
+    def search_by_year(self):
+        """
+        Finds all vehicles from a selected year.
+        """
+
+        year = self.get_int_input("Enter year to search: ")
+
+        results = []
+
+        for car in self.cars:
+            if car.year == year:
+                results.append(car)
+
+        self.display_vehicle_search_results(results)
+
+    def search_by_plate(self):
+        """
+        Finds a vehicle by plate/rego and displays its full basic information.
+        """
+
+        plate = self.get_text_input("Enter plate/rego to search: ").upper()
+        car = self.find_car(plate)
+
+        if car is None:
+            print("No matching vehicle found.")
+            return
+
+        print()
+        print("-" * 45)
+        car.display_info()
+        print(f"{'Service Records:':<25} {len(car.services):>10}")
+        print(f"{'Modification Records:':<25} {len(car.modifications):>10}")
+        print(f"{'Total Ownership Cost:':<25} ${car.total_ownership_cost():>10.2f}")
+        print("-" * 45)
+
+    def search_by_modification_category(self):
+        """
+        Finds vehicles that contain at least one modification
+        matching the selected category.
+
+        This demonstrates nested traversal because the system searches
+        through each vehicle and then through each vehicle's modifications.
+        """
+
+        category = self.get_text_input("Enter modification category: ")
+
+        results = []
+
+        for car in self.cars:
+            for modification in car.modifications:
+                if modification.category.lower() == category.lower():
+                    if car not in results:
+                        results.append(car)
+
+        self.display_vehicle_search_results(results)
+
+    def search_and_filter_menu(self):
+        """
+        Displays a submenu for search and filter features.
+        """
+
+        if len(self.cars) == 0:
+            print("No cars in garage.")
+            return
+
+        while True:
+            self.clear_screen()
+            self.print_header("Search & Filter Vehicles")
+
+            print("1. Search by Make")
+            print("2. Search by Year")
+            print("3. Search by Plate/Rego")
+            print("4. Search by Modification Category")
+            print("0. Back")
+            print("-" * 45)
+
+            choice = input("Select option: ").strip()
+
+            if choice == "1":
+                self.search_by_make()
+                self.pause()
+
+            elif choice == "2":
+                self.search_by_year()
+                self.pause()
+
+            elif choice == "3":
+                self.search_by_plate()
+                self.pause()
+
+            elif choice == "4":
+                self.search_by_modification_category()
+                self.pause()
+
+            elif choice == "0":
+                break
+
+            else:
+                print("Invalid option.")
+                self.pause()
+
+    def sort_by_highest_ownership_cost(self):
+        """
+        Sorts vehicles from highest to lowest total ownership cost.
+        """
+
+        sorted_cars = sorted(
+            self.cars,
+            key=lambda car: car.total_ownership_cost(),
+            reverse=True
+        )
+
+        self.display_vehicle_search_results(sorted_cars)
+
+    def sort_by_most_modified(self):
+        """
+        Sorts vehicles from most modified to least modified.
+        """
+
+        sorted_cars = sorted(
+            self.cars,
+            key=lambda car: len(car.modifications),
+            reverse=True
+        )
+
+        self.display_vehicle_search_results(sorted_cars)
+
+    def sort_by_year(self):
+        """
+        Sorts vehicles from newest to oldest.
+        """
+
+        sorted_cars = sorted(
+            self.cars,
+            key=lambda car: car.year,
+            reverse=True
+        )
+
+        self.display_vehicle_search_results(sorted_cars)
+
+    def sort_by_plate(self):
+        """
+        Sorts vehicles alphabetically by plate/rego.
+        """
+
+        sorted_cars = sorted(
+            self.cars,
+            key=lambda car: car.plate
+        )
+
+        self.display_vehicle_search_results(sorted_cars)
+
+    def sort_vehicles_menu(self):
+        """
+        Displays a submenu for sorting vehicles by different ranking methods.
+        """
+
+        if len(self.cars) == 0:
+            print("No cars in garage.")
+            return
+
+        while True:
+            self.clear_screen()
+            self.print_header("Sort Vehicles")
+
+            print("1. Sort by Highest Ownership Cost")
+            print("2. Sort by Most Modified")
+            print("3. Sort by Year")
+            print("4. Sort by Plate/Rego")
+            print("0. Back")
+            print("-" * 45)
+
+            choice = input("Select option: ").strip()
+
+            if choice == "1":
+                self.sort_by_highest_ownership_cost()
+                self.pause()
+
+            elif choice == "2":
+                self.sort_by_most_modified()
+                self.pause()
+
+            elif choice == "3":
+                self.sort_by_year()
+                self.pause()
+
+            elif choice == "4":
+                self.sort_by_plate()
+                self.pause()
+
+            elif choice == "0":
+                break
+
+            else:
+                print("Invalid option.")
+                self.pause()
+
     def show_menu(self):
         self.print_header("KFZ Performance Garage Manager")
 
@@ -817,10 +1079,12 @@ class GarageManager:
         print("12. View Cost Summary Per Car")
         print("13. View Overall Garage Summary")
         print("14. View Garage Statistics")
+        print("15. Search & Filter Vehicles")
+        print("16. Sort Vehicles")
         print("-" * 45)
-        print("15. Delete Car")
-        print("16. Save Data")
-        print("17. Load Data")
+        print("17. Delete Car")
+        print("18. Save Data")
+        print("19. Load Data")
         print("-" * 45)
         print(" 0. Exit")
 
@@ -847,9 +1111,11 @@ class GarageManager:
             "12": self.view_cost_summary,
             "13": self.view_garage_summary,
             "14": self.view_garage_statistics,
-            "15": self.delete_car,
-            "16": self.save_data,
-            "17": self.load_data
+            "15": self.search_and_filter_menu,
+            "16": self.sort_vehicles_menu,
+            "17": self.delete_car,
+            "18": self.save_data,
+            "19": self.load_data
         }
 
         while True:
