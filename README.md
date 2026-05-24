@@ -6,6 +6,13 @@ The system allows users to manage multiple vehicles, record service history, tra
 
 ---
 
+## Project Roadmap
+
+See the full Version 2.0 development roadmap here:
+
+[Version 2.0 Roadmap](VERSION_2_ROADMAP.md)
+
+
 ## Screenshots
 
 ### Startup Screen
@@ -93,6 +100,7 @@ KFZ-Performance-Garage-Manager/
 ├── main.py
 ├── garage_data.json
 ├── README.md
+├── VERSION_2_ROADMAP.md
 │
 └── screenshots/
     ├── startup.png
