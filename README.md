@@ -1,5 +1,7 @@
 # KFZ Performance Garage Manager
 
+Current Version: V2.0
+
 A terminal-based vehicle management system built in Python for automotive enthusiasts, performance car owners, and garage-style record keeping.
 
 The system allows users to manage multiple vehicles, record service history, track aftermarket modifications, calculate ownership costs, and store all garage data permanently using JSON file handling.
